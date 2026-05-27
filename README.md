@@ -113,11 +113,11 @@ Ao ligar ambos os módulos, o pareamento ocorre automaticamente.
 
 ## 👥 Equipe
 
-- Enzo
-- Pedro Kuba Bloise
-- Gustavo Henrique Lamberti Widosnck
-- Ruth Ramos Romeu
-
+- Enzo Medeiros Grando - 23.00209-3
+- Pedro Kuba Bloise - 23.00161-5
+- Gustavo Henrique Lamberti Widosnck - 23.00438-0
+- João Victor Pessoa de Lima dos Anjos - 23.01078-9
+- Gabriel Coutinho Cavalini - 22.95007-9
 ---
 
 ## 📄 Licença
