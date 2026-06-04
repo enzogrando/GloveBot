@@ -2,7 +2,7 @@
 
 Sistema embarcado de **teleoperação robótica vestível** que permite controlar uma garra mecânica através de gestos naturais da mão, via comunicação Bluetooth.
 
-> Projeto desenvolvido para a disciplina de **Microcontroladores e Sistemas Embarcados** (Prof. Calvetti).
+> Projeto desenvolvido para a disciplina de **Microcontroladores e Sistemas Embarcados**.
 
 ---
 
