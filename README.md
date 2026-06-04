@@ -19,16 +19,23 @@ Pensado para **robótica industrial e teleoperada**, com uso em cenários onde o
 
 ---
 
-## 🛠️ Arquitetura
-┌─────────────────────┐         ┌─────────────────────┐
-│   MÓDULO EMISSOR    │         │   MÓDULO RECEPTOR   │
-│       (Luva)        │         │       (Garra)       │
-├─────────────────────┤         ├─────────────────────┤
-│ LilyPad ATMega32U4  │         │ mbed LPC1768        │
-│ MPU-6050 (I2C)      │ ◄─BT──► │ HC-08 Slave (UART)  │
-│ HC-08 Master (UART) │         │ Servo MG995 (PWM)   │
-│ Bateria Li-ion      │         │ Display OLED (I2C)  │
-└─────────────────────┘         └─────────────────────┘
+## 🛠️ Diagrama de Blocos
+
+![Diagrama de Blocos do GloveBot](docs/diagrama_blocos.png)
+
+---
+
+## 📸 Galeria do Projeto
+
+![Montagem 1](docs/WhatsApp%20Image%202026-06-03%20at%2018.21.10.jpeg)
+![Montagem 2](docs/WhatsApp%20Image%202026-06-03%20at%2018.21.32.jpeg)
+![Montagem 3](docs/WhatsApp%20Image%202026-06-03%20at%2018.21.36.jpeg)
+![Montagem 4](docs/WhatsApp%20Image%202026-06-03%20at%2018.21.37.jpeg)
+
+### 🎥 Vídeo de Demonstração
+
+[▶️ Assistir vídeo de demonstração](docs/WhatsApp%20Video%202026-06-03%20at%2018.21.37.mp4)
+
 ---
 
 ## 📦 Componentes
@@ -76,7 +83,11 @@ Pensado para **robótica industrial e teleoperada**, com uso em cenários onde o
 ## 📡 Protocolo de Comunicação
 
 A luva envia comandos em formato simples via Bluetooth:
+
+```
 A<angulo>\n
+```
+
 **Exemplos:**
 - `A0\n` → garra completamente fechada (0°)
 - `A90\n` → garra na posição central (90°)
@@ -113,11 +124,12 @@ Ao ligar ambos os módulos, o pareamento ocorre automaticamente.
 
 ## 👥 Equipe
 
-- Enzo Medeiros Grando - 23.00209-3
-- Pedro Kuba Bloise - 23.00161-5
-- Gustavo Henrique Lamberti Widosnck - 23.00438-0
-- João Victor Pessoa de Lima dos Anjos - 23.01078-9
-- Gabriel Coutinho Cavalini - 22.95007-9
+- Enzo Medeiros Grando
+- Pedro Kuba Bloise
+- Gustavo Henrique Lamberti Widosnck
+- Gabriel Coutinho
+- João Victor Pessoa de Lima dos Anjos
+
 ---
 
 ## 📄 Licença
