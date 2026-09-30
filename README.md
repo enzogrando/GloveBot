@@ -25,6 +25,45 @@ Pensado para **robótica industrial e teleoperada**, com uso em cenários onde o
 
 ---
 
+## 🍓 Monitoramento com Raspberry Pi e Dashboard
+
+Além do controle da garra, o GloveBot tem uma camada de **telemetria**: um Raspberry Pi 4 recebe o ângulo da garra e envia os dados, via **MQTT**, para um dashboard online no **Ubidots**.
+
+```
+Luva ──Bluetooth──► mbed + Garra ──Serial USB──► Raspberry Pi ──MQTT──► Ubidots
+```
+
+### Variáveis enviadas ao dashboard
+
+| Variável | Descrição |
+|---|---|
+| `angulo` | Ângulo atual da garra (0 a 180) |
+| `status_garra` | 0 = fechada, 1 = meio, 2 = aberta |
+| `contador_agarramentos` | Quantidade de ciclos aberta → fechada |
+| `status_conexao` | 1 = recebendo dados, 0 = sem dados há mais de 2 s |
+| `velocidade_movimento` | Variação do ângulo por segundo |
+
+### Dashboard
+
+![Dashboard do GloveBot no Ubidots](docs/Dashboard.jpeg)
+
+### Como rodar o script
+
+1. Instale as dependências no Raspberry Pi:
+```bash
+   sudo apt install python3-serial python3-paho-mqtt
+```
+2. Abra `raspberry/glovebot_pi.py` e coloque o seu token do Ubidots em `TOKEN`.
+3. Com `MODO_TESTE = True` o script simula o ângulo. Com o mbed conectado por USB, use `MODO_TESTE = False`.
+4. Execute:
+```bash
+   python3 glovebot_pi.py
+```
+
+> ⚠️ Nunca publique o token do Ubidots no repositório. O arquivo do GitHub usa `SEU_TOKEN_AQUI`.
+
+---
+
 ## 📸 Galeria do Projeto
 
 ![Montagem 1](docs/WhatsApp%20Image%202026-06-03%20at%2018.21.10.jpeg)
