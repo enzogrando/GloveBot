@@ -80,7 +80,9 @@ Luva ──Bluetooth──► mbed + Garra ──Serial USB──► Raspberry P
 
 ### 🎥 Vídeo de Demonstração
 
-[▶️ Assistir vídeo de demonstração](docs/WhatsApp%20Video%202026-06-03%20at%2018.21.37.mp4)
+Movimento da luva controlando a garra e os dados chegando ao dashboard do Ubidots em tempo real.
+
+[▶️ Assistir vídeo de demonstração](docs/video_demonstracao.mp4)
 
 ---
 
