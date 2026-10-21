@@ -68,10 +68,15 @@ Luva ──Bluetooth──► mbed + Garra ──Serial USB──► Raspberry P
 
 ## 📸 Galeria do Projeto
 
-![Montagem 1](docs/WhatsApp%20Image%202026-06-03%20at%2018.21.10.jpeg)
-![Montagem 2](docs/WhatsApp%20Image%202026-06-03%20at%2018.21.32.jpeg)
-![Montagem 3](docs/WhatsApp%20Image%202026-06-03%20at%2018.21.36.jpeg)
-![Montagem 4](docs/WhatsApp%20Image%202026-06-03%20at%2018.21.37.jpeg)
+### Luva e garra
+![Luva (emissor) e garra robótica](docs/foto_luva_garra.jpg)
+
+### Sistema completo: Raspberry Pi e receptor
+![Raspberry Pi ligado ao mbed pela USB](docs/foto_sistema_completo.jpg)
+
+| Receptor (mbed + HC-08 na protoboard) | Raspberry Pi 4 |
+|---|---|
+| ![Receptor](docs/foto_receptor_mbed.jpg) | ![Raspberry Pi 4](docs/foto_raspberry_pi.jpg) |
 
 ### 🎥 Vídeo de Demonstração
 
