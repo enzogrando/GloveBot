@@ -72,3 +72,7 @@ Testing/
 !mbed-os.lib
 receptor/mbed-os/
 receptor/cmake_build/
+
+# Python
+__pycache__/
+*.pyc
