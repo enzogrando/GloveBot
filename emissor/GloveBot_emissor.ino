@@ -1,37 +1,40 @@
 /*
- * GloveBot - Módulo Emissor (Luva)
- * 
- * Hardware:
- * - LilyPad Arduino USB (ATmega32U4)
- * - MPU-6050 (acelerômetro/giroscópio I2C)
- * - HC-08 (Bluetooth 4.0 BLE)
- * - Bateria Li-ion wearable
- * 
- * Funcionamento:
- * Lê a inclinação do pulso pelo MPU-6050, calcula um ângulo de 0 a 180°
- * e envia o comando via Bluetooth para o receptor controlar a garra.
- * 
- * Protocolo de envio: "A<angulo>\n"
- * Exemplo: "A90\n" -> garra em 90° (semi-aberta)
+ * GloveBot - Modulo Emissor (Luva)
+ *
+ * Hardware: LilyPad Arduino USB (ATmega32U4), MPU-6050 (I2C, pinos 2/3),
+ *           HC-08 Master (SoftwareSerial, pinos 9/10)
+ *
+ * Le o giro lateral da mao (roll) no MPU-6050, filtra, converte para o
+ * angulo da garra (0 = fechada, 180 = aberta) e envia por Bluetooth.
+ * Protocolo enviado: "A<angulo>\n" a cada 50 ms.
  */
-
 #include <Wire.h>
 #include <MPU6050.h>
 #include <SoftwareSerial.h>
 
-// Pinos do HC-08 na LilyPad
-#define BT_RX  9   // recebe do TX do HC-08
-#define BT_TX  10  // envia ao RX do HC-08
+#define BT_RX  9    // recebe do TXD do HC-08
+#define BT_TX  10   // envia ao RXD do HC-08
 
-// Limites do ângulo de abertura da garra
-#define ANGLE_MIN   0    // garra fechada
-#define ANGLE_MAX   180  // garra aberta
-
-// Intervalo de envio (ms)
+#define ANGLE_MIN   0
+#define ANGLE_MAX   180
 #define SEND_INTERVAL 50
+
+// === SENSIBILIDADE ===
+// Faixa de giro da mao (graus de roll) que corresponde ao curso completo.
+// Mais largo = mais facil controlar posicoes intermediarias.
+#define ROLL_FECHADO  -5    // mao nessa posicao = garra fechada
+#define ROLL_ABERTO   -50   // mao nessa posicao = garra aberta
+
+// === TREMOR ===
+#define ALPHA     0.30f     // filtro suave (menor = mais suave e mais lento)
+#define DEADBAND  2         // variacao minima (graus) para mudar o angulo
 
 MPU6050 mpu;
 SoftwareSerial btSerial(BT_RX, BT_TX);
+
+float rollFiltrado = 0;
+bool primeiraLeitura = true;
+int anguloEnviado = 0;
 
 void setup() {
   Wire.begin();
@@ -43,12 +46,15 @@ void setup() {
     Serial.println("ERRO: MPU-6050 nao encontrado!");
     while (true);
   }
-  Serial.println("MPU-6050 OK. GloveBot emissor iniciado.");
+  Serial.println("MPU-6050 OK. GloveBot emissor v3 iniciado.");
 }
 
-// Calcula o pitch (inclinação frontal) a partir da aceleração
-float calcPitch(int16_t ax, int16_t ay, int16_t az) {
-  return atan2((float)ax, (float)az) * (180.0 / M_PI);
+float calcRoll(int16_t ax, int16_t ay, int16_t az) {
+  return atan2((float)ay, (float)az) * (180.0 / M_PI);
+}
+
+float mapFloat(float x, float inMin, float inMax, float outMin, float outMax) {
+  return (x - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
 }
 
 void loop() {
@@ -60,19 +66,30 @@ void loop() {
     int16_t ax, ay, az;
     mpu.getAcceleration(&ax, &ay, &az);
 
-    float pitch = calcPitch(ax, ay, az);
+    float roll = calcRoll(ax, ay, az);
 
-    // Mapeia -90° a +90° para 0° a 180° (servo)
-    int angle = map((int)pitch, -90, 90, ANGLE_MIN, ANGLE_MAX);
-    angle = constrain(angle, ANGLE_MIN, ANGLE_MAX);
+    // Filtro passa-baixa (media movel exponencial) contra tremor
+    if (primeiraLeitura) {
+      rollFiltrado = roll;
+      primeiraLeitura = false;
+    } else {
+      rollFiltrado = ALPHA * roll + (1.0f - ALPHA) * rollFiltrado;
+    }
 
-    // Envia comando via Bluetooth
+    float alvo = mapFloat(rollFiltrado, ROLL_ABERTO, ROLL_FECHADO, ANGLE_MAX, ANGLE_MIN);
+    int angle = constrain((int)alvo, ANGLE_MIN, ANGLE_MAX);
+
+    // Zona morta: ignora variacoes pequenas; nos extremos sempre atualiza
+    if (abs(angle - anguloEnviado) >= DEADBAND ||
+        angle == ANGLE_MIN || angle == ANGLE_MAX) {
+      anguloEnviado = angle;
+    }
+
     btSerial.print("A");
-    btSerial.print(angle);
+    btSerial.print(anguloEnviado);
     btSerial.print("\n");
 
-    // Debug no monitor serial
-    Serial.print("Pitch: "); Serial.print(pitch, 1);
-    Serial.print("  Angle: "); Serial.println(angle);
+    Serial.print("Roll: "); Serial.print(rollFiltrado, 1);
+    Serial.print("  Angle: "); Serial.println(anguloEnviado);
   }
 }

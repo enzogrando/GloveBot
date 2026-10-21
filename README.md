@@ -54,13 +54,15 @@ Luva ──Bluetooth──► mbed + Garra ──Serial USB──► Raspberry P
    sudo apt install python3-serial python3-paho-mqtt
 ```
 2. Abra `raspberry/glovebot_pi.py` e coloque o seu token do Ubidots em `TOKEN`.
-3. Com `MODO_TESTE = True` o script simula o ângulo. Com o mbed conectado por USB, use `MODO_TESTE = False`.
+3. Com o mbed conectado por USB (aparece como `/dev/ttyACM0`), deixe `MODO_TESTE = False`. Para testar sem hardware, use `MODO_TESTE = True` (ângulo simulado).
 4. Execute:
 ```bash
    python3 glovebot_pi.py
 ```
 
 > ⚠️ Nunca publique o token do Ubidots no repositório. O arquivo do GitHub usa `SEU_TOKEN_AQUI`.
+
+> 💡 Nos gráficos do Ubidots, use um período **relativo** (ex.: *Last 5 minutes*). Com um período fixo, o gráfico não acompanha os dados em tempo real.
 
 ---
 
@@ -96,6 +98,12 @@ Luva ──Bluetooth──► mbed + Garra ──Serial USB──► Raspberry P
 | Display OLED 128x32 (I2C) | Feedback visual |
 | Fonte 5V-2A externa | Alimentação do servo |
 
+### Monitoramento
+| Componente | Função |
+|---|---|
+| Raspberry Pi 4 Model B | Gateway: lê o ângulo do mbed pela USB e publica via MQTT |
+| Ubidots (STEM) | Dashboard online |
+
 ---
 
 ## 🔌 Pinagem
@@ -116,6 +124,11 @@ Luva ──Bluetooth──► mbed + Garra ──Serial USB──► Raspberry P
 | HC-08 RX (TX do mbed) | p13 |
 | OLED SDA | p9 |
 | OLED SCL | p10 |
+| HC-08 VCC | VOUT (3,3 V) |
+| Servo VCC / GND | +5 V / GND da fonte externa |
+| GND da fonte | GND do mbed (**terra comum obrigatório**) |
+
+> O display OLED é opcional: no `main.cpp`, `#define USE_OLED 0` desliga o display e `1` liga.
 
 ---
 
@@ -128,9 +141,22 @@ A<angulo>\n
 ```
 
 **Exemplos:**
-- `A0\n` → garra completamente fechada (0°)
-- `A90\n` → garra na posição central (90°)
-- `A180\n` → garra completamente aberta (180°)
+- `A0\n` → garra completamente fechada
+- `A90\n` → garra na posição central
+- `A180\n` → garra completamente aberta
+
+O mbed repassa cada ângulo válido pela Serial USB (`<angulo>\n`, 9600 baud) para o Raspberry Pi.
+
+### Ajustes do movimento
+
+| Onde | Parâmetro | Efeito |
+|---|---|---|
+| Luva | `ROLL_FECHADO` / `ROLL_ABERTO` | Faixa de giro da mão para o curso completo (sensibilidade) |
+| Luva | `ALPHA` | Filtro contra tremor (menor = mais suave) |
+| Luva | `DEADBAND` | Variação mínima para mudar o ângulo |
+| Garra | `LIM_MIN` / `LIM_MAX` | Curso permitido do servo (evita forçar nos limites da garra) |
+| Garra | `PASSO_MAX` | Velocidade máxima do servo (evita picos de corrente) |
+| Garra | `SERVO_INVERTIDO` | Inverte o sentido, conforme a montagem da garra |
 
 ---
 
@@ -142,22 +168,34 @@ A<angulo>\n
 3. Abra `emissor/GloveBot_emissor.ino`
 4. Faça o upload
 
-### Receptor (Keil Studio Cloud)
-1. Acesse [studio.keil.arm.com](https://studio.keil.arm.com)
-2. Crie um projeto **Empty Mbed OS** com target **mbed NXP LPC1768**
-3. Substitua o `main.cpp` pelo arquivo em `receptor/main.cpp`
-4. Compile e arraste o `.bin` para o mbed
+### Receptor (mbed LPC1768)
+O Keil Studio Cloud foi desativado, então o receptor é compilado localmente com o **mbed-tools** (Mbed OS 6.17) e o GCC ARM.
+
+**Jeito rápido:** arraste `receptor/GloveBot_receptor.bin` para a unidade **MBED** e aperte RESET.
+
+**Para recompilar:**
+```bash
+pip install mbed-tools
+cd receptor
+git clone --depth 1 --branch mbed-os-6.17.0 https://github.com/ARMmbed/mbed-os.git
+mbed-tools compile -m LPC1768 -t GCC_ARM
+```
+O `.bin` sai em `cmake_build/LPC1768/develop/GCC_ARM/GloveBot.bin`.
 
 ---
 
 ## 🔗 Pareamento Bluetooth
 
-Os módulos HC-08 são configurados via comandos AT:
+Os módulos HC-08 são configurados via comandos AT, usando o sketch `emissor/HC08_config_luva.ino` e o Monitor Serial (9600 baud, **No line ending**, comandos em maiúsculas):
 
-- **Emissor (LilyPad)**: configurado como **Master** com `AT+ROLE=M` e `AT+CONT=1` (conexão automática)
+- **Emissor (LilyPad)**: **Master** com `AT+ROLE=M` e `AT+CONT=0` (conectável)
 - **Receptor (mbed)**: mantido como **Slave** (padrão de fábrica)
 
-Ao ligar ambos os módulos, o pareamento ocorre automaticamente.
+Comandos úteis: `AT` (teste), `AT+RX` (nome, papel, endereço), `AT+CONT=?` (deve mostrar `Connectable`), `AT+CLEAR` (apaga o slave memorizado).
+
+> ⚠️ `AT+CONT=1` deixa o master **Non-Connectable** e ele nunca pareia.
+
+Ao ligar o mbed e depois a luva, o pareamento ocorre automaticamente: os LEDs dos dois HC-08 param de piscar e ficam fixos. Depois de configurar, grave de novo `emissor/GloveBot_emissor.ino` na luva.
 
 ---
 

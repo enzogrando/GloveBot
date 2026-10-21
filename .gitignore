@@ -67,3 +67,8 @@ vcpkg_installed/
 # test output & cache
 Testing/
 .cache/
+
+# Mbed (receptor) - o mbed-os.lib precisa entrar no repo
+!mbed-os.lib
+receptor/mbed-os/
+receptor/cmake_build/

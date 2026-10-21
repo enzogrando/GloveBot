@@ -6,7 +6,7 @@ import paho.mqtt.client as mqtt
 TOKEN = "SEU_TOKEN_AQUI"
 DEVICE = "glovebot"
 
-MODO_TESTE = True            # True = ângulo simulado | False = lê o mbed pela USB
+MODO_TESTE = False           # True = ângulo simulado | False = lê o mbed pela USB
 PORTA_SERIAL = "/dev/ttyACM0"
 BAUD = 9600
 

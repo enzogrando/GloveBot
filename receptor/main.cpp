@@ -1,22 +1,29 @@
 /*
  * GloveBot - Módulo Receptor (Garra)
- * 
+ *
  * Hardware:
  * - mbed LPC1768 (ARM Cortex-M3)
  * - HC-08 (Bluetooth 4.0 BLE - Slave)
  * - Servo Motor MG995
  * - Display OLED 128x32 I2C (SSD1306)
  * - Fonte 5V-2A externa
- * 
+ * - Raspberry Pi (recebe o ângulo pela Serial USB)
+ *
  * Funcionamento:
  * Recebe comandos via Bluetooth do módulo emissor (luva),
  * processa o ângulo recebido e controla o servo motor da garra.
- * Exibe status em tempo real no display OLED.
- * 
- * Protocolo recebido: "A<angulo>\n"
+ * Exibe status em tempo real no display OLED (opcional) e envia
+ * o ângulo pela Serial USB (uma linha por leitura) para o Raspberry Pi.
+ *
+ * Protocolo recebido (Bluetooth): "A<angulo>\n"
+ * Protocolo enviado (USB):        "<angulo>\n"
  */
 
 #include "mbed.h"
+
+// ============ OPCOES ============
+// 1 = display OLED ligado em p9/p10 | 0 = sem display (testes sem o OLED)
+#define USE_OLED 0
 
 // ============ HARDWARE ============
 PwmOut servo(p21);
@@ -29,6 +36,8 @@ const float SERVO_PERIOD_MS = 20.0f;
 const float SERVO_MIN_MS = 1.0f;
 const float SERVO_MAX_MS = 2.0f;
 const int OLED_ADDR = 0x78;  // 0x3C << 1
+// 1 = garra montada ao contrario (servo em 0 graus = garra aberta)
+#define SERVO_INVERTIDO 1
 
 // ============ FONTE 5x7 (numeros) ============
 const uint8_t font5x7[][5] = {
@@ -122,7 +131,7 @@ void oledChar(int page, int col, char c) {
     oledCmd(0xB0 | page);
     oledCmd(0x00 | (col & 0x0F));
     oledCmd(0x10 | ((col >> 4) & 0x0F));
-    
+
     uint8_t buf[6] = {0};
     if (c >= '0' && c <= '9') {
         for (int i = 0; i < 5; i++) buf[i] = font5x7[c - '0' + 1][i];
@@ -147,18 +156,21 @@ void oledText(int page, int col, const char* text) {
 void setServoAngle(int angle) {
     if (angle < 0) angle = 0;
     if (angle > 180) angle = 180;
+#if SERVO_INVERTIDO
+    angle = 180 - angle;
+#endif
     float pulse = SERVO_MIN_MS + (angle / 180.0f) * (SERVO_MAX_MS - SERVO_MIN_MS);
-    servo.pulsewidth_ms(pulse);
+    servo.pulsewidth_us((int)(pulse * 1000.0f));
 }
 
 void updateDisplay(int angle) {
     char buf[20];
     oledClear();
     oledText(0, 30, "GLOVEBOT");
-    
+
     sprintf(buf, "ANG:%d", angle);
     oledText(2, 0, buf);
-    
+
     const char* status;
     if (angle < 60) status = "FECHADO";
     else if (angle < 120) status = "MEIO";
@@ -166,47 +178,86 @@ void updateDisplay(int angle) {
     oledText(2, 60, status);
 }
 
+// ============ AJUSTES DO MOVIMENTO ============
+// Curso permitido do servo (em graus "logicos" 0..180).
+// Se a garra ainda ficar forcando FECHADA, aumente LIM_MIN.
+// Se ficar forcando ABERTA, diminua LIM_MAX.
+const int LIM_MIN = 15;    // posicao mais fechada permitida
+const int LIM_MAX = 165;   // posicao mais aberta permitida
+// Velocidade maxima: graus por passo de 20 ms (4 = 200 graus/s).
+// Menor = mais suave e menos pico de corrente. Maior = mais rapido.
+const int PASSO_MAX = 4;
+const int PERIODO_MS = 20;
+
 // ============ MAIN ============
 int main() {
     servo.period_ms(SERVO_PERIOD_MS);
-    setServoAngle(0);
-    
+    int atual = LIM_MIN;   // posicao atual do servo
+    int alvo = LIM_MIN;    // posicao pedida pela luva
+    setServoAngle(atual);
+
+#if USE_OLED
     oledInit();
     oledClear();
     oledText(0, 20, "GLOVEBOT");
     oledText(2, 10, "INICIANDO");
     ThisThread::sleep_for(1500ms);
     updateDisplay(0);
-    
+#endif
+
     char buf[8];
     int bufIdx = 0;
     bool reading = false;
     char c;
-    int curAngle = 0;
-    
+    int curAngle = -1;
+
+    Timer passo;
+    passo.start();
+
     while (true) {
         if (bt.readable()) {
             bt.read(&c, 1);
-            
+
             if (c == 'A') {
                 bufIdx = 0;
                 reading = true;
             } else if (reading && c == '\n') {
                 buf[bufIdx] = '\0';
                 int angle = atoi(buf);
-                
+
                 if (angle >= 0 && angle <= 180) {
                     led = !led;
-                    setServoAngle(angle);
+                    // Converte 0..180 da luva para o curso permitido do servo
+                    alvo = LIM_MIN + (angle * (LIM_MAX - LIM_MIN)) / 180;
+
+                    // Envia o angulo da luva pela Serial USB para o Raspberry Pi
+                    printf("%d\n", angle);
+
+#if USE_OLED
                     if (angle != curAngle) {
                         curAngle = angle;
                         updateDisplay(curAngle);
                     }
+#else
+                    curAngle = angle;
+#endif
                 }
                 reading = false;
                 bufIdx = 0;
             } else if (reading && bufIdx < 7) {
                 buf[bufIdx++] = c;
+            }
+        }
+
+        // A cada 20 ms o servo anda no maximo PASSO_MAX graus em direcao ao alvo
+        if (passo.elapsed_time() >= std::chrono::milliseconds(PERIODO_MS)) {
+            passo.reset();
+            if (atual != alvo) {
+                int dif = alvo - atual;
+                if (dif > PASSO_MAX) dif = PASSO_MAX;
+                if (dif < -PASSO_MAX) dif = -PASSO_MAX;
+                atual += dif;
+                setServoAngle(atual);
             }
         }
     }
