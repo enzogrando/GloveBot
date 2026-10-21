@@ -84,7 +84,7 @@ Movimento da luva controlando a garra e os dados chegando ao dashboard do Ubidot
 
 ![Demonstração do GloveBot](docs/demonstracao.gif)
 
-[▶️ Baixar o vídeo com áudio (MP4)](docs/video_demonstracao.mp4)
+[▶️ Assistir vídeo de demonstração](docs/video_demonstracao.mp4)
 
 ---
 
