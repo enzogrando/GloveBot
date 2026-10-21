@@ -19,33 +19,32 @@ Pensado para **robótica industrial e teleoperada**, com uso em cenários onde o
 
 ---
 
+## 🗂️ Entregas
+
+| Entrega | O que é | Onde está |
+|---|---|---|
+| **T1 — Sistema embarcado** | Luva (LilyPad + MPU-6050 + HC-08) controlando a garra (mbed + servo) via Bluetooth | [`emissor/`](emissor), [`receptor/`](receptor), [URD](docs/GloveBot_URD.docx), [diagrama de blocos](docs/diagrama_blocos.png) |
+| **T2 — Raspberry Pi** | Raspberry Pi 4 lendo o ângulo do mbed pela Serial USB e enviando via MQTT | [`raspberry/glovebot_pi.py`](raspberry/glovebot_pi.py), [seção T2](#-t2--raspberry-pi) |
+| **T3 — Dashboard online** | Dashboard no Ubidots com a telemetria em tempo real | [seção T3](#-t3--dashboard-online-ubidots), [print do dashboard](docs/Dashboard.jpeg) |
+
+---
+
 ## 🛠️ Diagrama de Blocos
 
 ![Diagrama de Blocos do GloveBot](docs/diagrama_blocos.png)
 
 ---
 
-## 🍓 Monitoramento com Raspberry Pi e Dashboard
+## 🍓 T2 — Raspberry Pi
 
-Além do controle da garra, o GloveBot tem uma camada de **telemetria**: um Raspberry Pi 4 recebe o ângulo da garra e envia os dados, via **MQTT**, para um dashboard online no **Ubidots**.
+Além do controle da garra (T1), o GloveBot tem uma camada de **telemetria**: um Raspberry Pi 4 recebe o ângulo da garra pela Serial USB do mbed e envia os dados, via **MQTT**, para um dashboard online no **Ubidots** (T3).
 
 ```
 Luva ──Bluetooth──► mbed + Garra ──Serial USB──► Raspberry Pi ──MQTT──► Ubidots
+         (T1)                                        (T2)                (T3)
 ```
 
-### Variáveis enviadas ao dashboard
-
-| Variável | Descrição |
-|---|---|
-| `angulo` | Ângulo atual da garra (0 a 180) |
-| `status_garra` | 0 = fechada, 1 = meio, 2 = aberta |
-| `contador_agarramentos` | Quantidade de ciclos aberta → fechada |
-| `status_conexao` | 1 = recebendo dados, 0 = sem dados há mais de 2 s |
-| `velocidade_movimento` | Variação do ângulo por segundo |
-
-### Dashboard
-
-![Dashboard do GloveBot no Ubidots](docs/Dashboard.jpeg)
+O script [`raspberry/glovebot_pi.py`](raspberry/glovebot_pi.py) lê o ângulo, calcula os indicadores (status, contador de agarramentos, conexão e velocidade) e publica a cada 2 segundos no tópico `/v1.6/devices/glovebot`.
 
 ### Como rodar o script
 
@@ -61,6 +60,24 @@ Luva ──Bluetooth──► mbed + Garra ──Serial USB──► Raspberry P
 ```
 
 > ⚠️ Nunca publique o token do Ubidots no repositório. O arquivo do GitHub usa `SEU_TOKEN_AQUI`.
+
+---
+
+## 📊 T3 — Dashboard online (Ubidots)
+
+### Variáveis enviadas ao dashboard
+
+| Variável | Descrição |
+|---|---|
+| `angulo` | Ângulo atual da garra (0 a 180) |
+| `status_garra` | 0 = fechada, 1 = meio, 2 = aberta |
+| `contador_agarramentos` | Quantidade de ciclos aberta → fechada |
+| `status_conexao` | 1 = recebendo dados, 0 = sem dados há mais de 2 s |
+| `velocidade_movimento` | Variação do ângulo por segundo |
+
+### Dashboard
+
+![Dashboard do GloveBot no Ubidots](docs/Dashboard.jpeg)
 
 > 💡 Nos gráficos do Ubidots, use um período **relativo** (ex.: *Last 5 minutes*). Com um período fixo, o gráfico não acompanha os dados em tempo real.
 
