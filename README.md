@@ -87,7 +87,7 @@ Luva ──Bluetooth──► mbed + Garra ──Serial USB──► Raspberry P
 | LilyPad IOT ATMega32U4 | Microcontrolador vestível |
 | MPU-6050 | Acelerômetro/giroscópio |
 | HC-08 (Master) | Bluetooth 4.0 BLE |
-| Bateria Li-ion wearable | Alimentação portátil |
+| Cabo USB (PC) | Alimentação e gravação do código |
 
 ### Receptor (Garra)
 | Componente | Função |
@@ -95,7 +95,6 @@ Luva ──Bluetooth──► mbed + Garra ──Serial USB──► Raspberry P
 | mbed LPC1768 (Cortex-M3) | Microcontrolador principal |
 | HC-08 (Slave) | Bluetooth 4.0 BLE |
 | Servo MG995 | Atuador da garra |
-| Display OLED 128x32 (I2C) | Feedback visual |
 | Fonte 5V-2A externa | Alimentação do servo |
 
 ### Monitoramento
@@ -122,13 +121,9 @@ Luva ──Bluetooth──► mbed + Garra ──Serial USB──► Raspberry P
 | Servo MG995 (PWM) | p21 |
 | HC-08 TX (RX do mbed) | p14 |
 | HC-08 RX (TX do mbed) | p13 |
-| OLED SDA | p9 |
-| OLED SCL | p10 |
 | HC-08 VCC | VOUT (3,3 V) |
 | Servo VCC / GND | +5 V / GND da fonte externa |
 | GND da fonte | GND do mbed (**terra comum obrigatório**) |
-
-> O display OLED é opcional: no `main.cpp`, `#define USE_OLED 0` desliga o display e `1` liga.
 
 ---
 
