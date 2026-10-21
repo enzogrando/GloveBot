@@ -201,6 +201,8 @@ Ao ligar o mbed e depois a luva, o pareamento ocorre automaticamente: os LEDs do
 
 ## 👥 Equipe
 
+![Equipe do GloveBot](docs/foto_equipe.jpg)
+
 - Enzo Medeiros Grando
 - Pedro Kuba Bloise
 - Gustavo Henrique Lamberti Widosnck
