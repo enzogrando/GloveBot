@@ -82,7 +82,9 @@ Luva ──Bluetooth──► mbed + Garra ──Serial USB──► Raspberry P
 
 Movimento da luva controlando a garra e os dados chegando ao dashboard do Ubidots em tempo real.
 
-[▶️ Assistir vídeo de demonstração](docs/video_demonstracao.mp4)
+![Demonstração do GloveBot](docs/demonstracao.gif)
+
+[▶️ Baixar o vídeo com áudio (MP4)](docs/video_demonstracao.mp4)
 
 ---
 
